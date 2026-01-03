@@ -29,6 +29,7 @@ from typing import TYPE_CHECKING, Any
 
 from . import utils
 from .asset import Asset
+from .datetime import DiscordTime
 from .enums import (
     ScheduledEventLocationType,
     ScheduledEventPrivacyLevel,
@@ -146,9 +147,9 @@ class ScheduledEvent(Hashable):
         The name of the scheduled event.
     description: Optional[:class:`str`]
         The description of the scheduled event.
-    start_time: :class:`datetime.datetime`
+    start_time: :class:`discord.DiscordTime`
         The time when the event will start
-    end_time: Optional[:class:`datetime.datetime`]
+    end_time: Optional[:class:`discord.DiscordTime`]
         The time when the event is supposed to end.
     status: :class:`ScheduledEventStatus`
         The status of the scheduled event.
@@ -200,10 +201,8 @@ class ScheduledEvent(Hashable):
         self.name: str = data.get("name")
         self.description: str | None = data.get("description", None)
         self._image: str | None = data.get("image", None)
-        self.start_time: datetime.datetime = datetime.datetime.fromisoformat(data.get("scheduled_start_time"))
-        if end_time := data.get("scheduled_end_time", None):
-            end_time = datetime.datetime.fromisoformat(end_time)
-        self.end_time: datetime.datetime | None = end_time
+        self.start_time: DiscordTime = DiscordTime.fromisoformat(data.get("scheduled_start_time"))
+        self.end_time: DiscordTime | None = DiscordTime.parse_time(data.get("scheduled_end_time"))
         self.status: ScheduledEventStatus = try_enum(ScheduledEventStatus, data.get("status"))
         self.subscriber_count: int | None = data.get("user_count", None)
         self.creator_id: int | None = get_as_snowflake(data, "creator_id")
@@ -233,9 +232,9 @@ class ScheduledEvent(Hashable):
         )
 
     @property
-    def created_at(self) -> datetime.datetime:
+    def created_at(self) -> DiscordTime:
         """Returns the scheduled event's creation time in UTC."""
-        return utils.snowflake_time(self.id)
+        return DiscordTime.from_snowflake(self.id)
 
     @property
     def interested(self) -> int | None:

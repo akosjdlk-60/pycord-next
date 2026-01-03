@@ -23,7 +23,6 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from copy import copy
-from datetime import datetime
 from functools import lru_cache
 from typing import Any, TypeVar, cast
 
@@ -35,7 +34,9 @@ from discord.app.state import ConnectionState
 from discord.channel import GroupChannel, GuildChannel, _channel_factory
 from discord.channel.thread import Thread
 from discord.enums import ChannelType, try_enum
-from discord.utils.private import get_as_snowflake, parse_time
+from discord.utils.private import get_as_snowflake
+
+from ..datetime import DiscordTime
 
 T = TypeVar("T")
 
@@ -257,13 +258,13 @@ class ChannelPinsUpdate(Event):
     ----------
     channel: :class:`abc.PrivateChannel` | :class:`TextChannel` | :class:`VoiceChannel` | :class:`StageChannel` | :class:`ForumChannel` | :class:`Thread`
         The channel that had its pins updated. Can be any messageable channel type.
-    last_pin: :class:`datetime.datetime` | None
+    last_pin: :class:`discord.DiscordTime` | None
         The latest message that was pinned as an aware datetime in UTC, or None if no pins exist.
     """
 
     __event_name__: str = "CHANNEL_PINS_UPDATE"
     channel: PrivateChannel | GuildChannel | Thread
-    last_pin: datetime | None
+    last_pin: DiscordTime | None
 
     @classmethod
     @override
@@ -282,5 +283,5 @@ class ChannelPinsUpdate(Event):
 
         self = cls()
         self.channel = channel
-        self.last_pin = parse_time(data["last_pin_timestamp"]) if data["last_pin_timestamp"] else None
+        self.last_pin = DiscordTime.parse_time(data["last_pin_timestamp"])
         return self

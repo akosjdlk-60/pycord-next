@@ -40,9 +40,9 @@ from typing import (
 )
 
 from .audit_logs import AuditLogEntry
+from .datetime import DiscordTime
 from .errors import NoMoreItems
 from .object import Object
-from .utils import generate_snowflake, snowflake_time
 from .utils.private import maybe_awaitable, warn_deprecated
 
 __all__ = (
@@ -331,11 +331,11 @@ class HistoryIterator(_AsyncIterator["Message"]):
         oldest_first=None,
     ):
         if isinstance(before, datetime.datetime):
-            before = Object(id=generate_snowflake(before, high=False))
+            before = Object(id=DiscordTime.from_datetime(before).generate_snowflake(high=False))
         if isinstance(after, datetime.datetime):
-            after = Object(id=generate_snowflake(after, high=True))
+            after = Object(id=DiscordTime.from_datetime(after).generate_snowflake(high=True))
         if isinstance(around, datetime.datetime):
-            around = Object(id=generate_snowflake(around))
+            around = Object(id=DiscordTime.from_datetime(around).generate_snowflake())
 
         self.reverse = after is not None if oldest_first is None else oldest_first
         self.messageable = messageable
@@ -457,9 +457,9 @@ class AuditLogIterator(_AsyncIterator["AuditLogEntry"]):
         action_type=None,
     ):
         if isinstance(before, datetime.datetime):
-            before = Object(id=generate_snowflake(before, high=False))
+            before = Object(id=DiscordTime.from_datetime(before).generate_snowflake(high=False))
         if isinstance(after, datetime.datetime):
-            after = Object(id=generate_snowflake(after, high=True))
+            after = Object(id=DiscordTime.from_datetime(after).generate_snowflake(high=True))
 
         self.guild = guild
         self.loop = guild._state.loop
@@ -568,9 +568,9 @@ class GuildIterator(_AsyncIterator["Guild"]):
 
     def __init__(self, bot, limit, before=None, after=None, with_counts=True):
         if isinstance(before, datetime.datetime):
-            before = Object(id=generate_snowflake(before, high=False))
+            before = Object(id=DiscordTime.from_datetime(before).generate_snowflake(high=False))
         if isinstance(after, datetime.datetime):
-            after = Object(id=generate_snowflake(after, high=True))
+            after = Object(id=DiscordTime.from_datetime(after).generate_snowflake(high=True))
 
         self.bot = bot
         self.limit = limit
@@ -655,7 +655,7 @@ class GuildIterator(_AsyncIterator["Guild"]):
 class MemberIterator(_AsyncIterator["Member"]):
     def __init__(self, guild, limit=1000, after=None):
         if isinstance(after, datetime.datetime):
-            after = Object(id=generate_snowflake(after, high=True))
+            after = Object(id=DiscordTime.from_datetime(after).generate_snowflake(high=True))
 
         self.guild = guild
         self.limit = limit
@@ -787,14 +787,14 @@ class ArchivedThreadIterator(_AsyncIterator["Thread"]):
             self.before = None
         elif isinstance(before, datetime.datetime):
             if joined:
-                self.before = str(generate_snowflake(before, high=False))
+                self.before = str(DiscordTime.from_datetime(before).generate_snowflake(high=False))
             else:
                 self.before = before.isoformat()
         else:
             if joined:
                 self.before = str(before.id)
             else:
-                self.before = snowflake_time(before.id).isoformat()
+                self.before = DiscordTime.from_snowflake(before.id).isoformat()
 
         self.update_before: Callable[[ThreadPayload], str] = self.get_archive_timestamp
 
@@ -863,9 +863,9 @@ class ScheduledEventSubscribersIterator(_AsyncIterator[Union["User", "Member"]])
         after: datetime.datetime | int | None = None,
     ):
         if isinstance(before, datetime.datetime):
-            before = Object(id=generate_snowflake(before, high=False))
+            before = Object(id=DiscordTime.from_datetime(before).generate_snowflake(high=False))
         if isinstance(after, datetime.datetime):
-            after = Object(id=generate_snowflake(after, high=True))
+            after = Object(id=DiscordTime.from_datetime(after).generate_snowflake(high=True))
 
         self.event = event
         self.limit = limit
@@ -957,9 +957,9 @@ class EntitlementIterator(_AsyncIterator["Entitlement"]):
         self.sku_ids = sku_ids
 
         if isinstance(before, datetime.datetime):
-            before = Object(id=generate_snowflake(before, high=False))
+            before = Object(id=DiscordTime.from_datetime(before).generate_snowflake(high=False))
         if isinstance(after, datetime.datetime):
-            after = Object(id=generate_snowflake(after, high=True))
+            after = Object(id=DiscordTime.from_datetime(after).generate_snowflake(high=True))
 
         self.before = before
         self.after = after
@@ -1071,9 +1071,9 @@ class SubscriptionIterator(_AsyncIterator["Subscription"]):
         user_id: int | None = None,
     ):
         if isinstance(before, datetime.datetime):
-            before = Object(id=generate_snowflake(before, high=False))
+            before = Object(id=DiscordTime.from_datetime(before).generate_snowflake(high=False))
         if isinstance(after, datetime.datetime):
-            after = Object(id=generate_snowflake(after, high=True))
+            after = Object(id=DiscordTime.from_datetime(after).generate_snowflake(high=True))
 
         self.state = state
         self.sku_id = sku_id
@@ -1179,7 +1179,7 @@ class MessagePinIterator(_AsyncIterator["MessagePin"]):
         elif isinstance(before, datetime.datetime):
             self.before = before.isoformat()
         else:
-            self.before = snowflake_time(before.id).isoformat()
+            self.before = DiscordTime.from_snowflake(before.id).isoformat()
 
         self.update_before: Callable[[MessagePinPayload], str] = self.get_last_pinned
 

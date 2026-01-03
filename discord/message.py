@@ -25,7 +25,6 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
-import datetime
 import io
 import re
 from inspect import isawaitable
@@ -49,6 +48,7 @@ from . import utils
 from .channel import PartialMessageable
 from .channel.thread import Thread
 from .components import _component_factory
+from .datetime import DiscordTime
 from .embeds import Embed
 from .emoji import AppEmoji, GuildEmoji
 from .enums import ChannelType, MessageReferenceType, MessageType, try_enum
@@ -64,7 +64,7 @@ from .poll import Poll
 from .reaction import Reaction
 from .sticker import StickerItem
 from .utils import MISSING, escape_mentions
-from .utils.private import cached_slot_property, delay_task, get_as_snowflake, parse_time, warn_deprecated
+from .utils.private import cached_slot_property, delay_task, get_as_snowflake, warn_deprecated
 
 if TYPE_CHECKING:
     from .abc import (
@@ -265,18 +265,18 @@ class Attachment(Hashable):
                     setattr(self, attr, value)
 
     @property
-    def expires_at(self) -> datetime.datetime | None:
+    def expires_at(self) -> DiscordTime | None:
         """This attachment URL's expiry time in UTC."""
         if not self._ex:
             return None
-        return datetime.datetime.utcfromtimestamp(int(self._ex, 16))
+        return DiscordTime.utcfromtimestamp(int(self._ex, 16))
 
     @property
-    def issued_at(self) -> datetime.datetime | None:
+    def issued_at(self) -> DiscordTime | None:
         """The attachment URL's issue time in UTC."""
         if not self._is:
             return None
-        return datetime.datetime.utcfromtimestamp(int(self._is, 16))
+        return DiscordTime.utcfromtimestamp(int(self._is, 16))
 
     def is_spoiler(self) -> bool:
         """Whether this attachment contains a spoiler."""
@@ -694,7 +694,7 @@ class MessageCall:
     def __init__(self, state: ConnectionState, data: MessageCallPayload):
         self._state: ConnectionState = state
         self._participants: SnowflakeList = data.get("participants", [])
-        self._ended_timestamp: datetime.datetime | None = parse_time(data["ended_timestamp"])
+        self._ended_timestamp: DiscordTime | None = DiscordTime.parse_time(data["ended_timestamp"])
 
     async def get_participants(self) -> list[User | Object]:
         """A list of :class:`User` that participated in this call.
@@ -705,7 +705,7 @@ class MessageCall:
         return [await self._state.get_user(int(i)) or Object(i) for i in self._participants]
 
     @property
-    def ended_at(self) -> datetime.datetime | None:
+    def ended_at(self) -> DiscordTime | None:
         """An aware timestamp of when the call ended."""
         return self._ended_timestamp
 
@@ -769,15 +769,15 @@ class ForwardedMessage:
         self.flags: MessageFlags = MessageFlags._from_value(data.get("flags", 0))
         self.stickers: list[StickerItem] = [StickerItem(data=d, state=state) for d in data.get("sticker_items", [])]
         self.components: list[Component] = [_component_factory(d) for d in data.get("components", [])]
-        self._edited_timestamp: datetime.datetime | None = parse_time(data["edited_timestamp"])
+        self._edited_timestamp: DiscordTime | None = DiscordTime.parse_time(data["edited_timestamp"])
 
     @property
-    def created_at(self) -> datetime.datetime:
+    def created_at(self) -> DiscordTime:
         """The original message's creation time in UTC."""
-        return utils.snowflake_time(self.id)
+        return DiscordTime.from_snowflake(self.id)
 
     @property
-    def edited_at(self) -> datetime.datetime | None:
+    def edited_at(self) -> DiscordTime | None:
         """An aware UTC datetime object containing the
         edited time of the original message.
         """
@@ -827,7 +827,7 @@ class MessagePin:
         data: MessagePinPayload,
     ):
         self._state: ConnectionState = state
-        self._pinned_at: datetime.datetime = utils.parse_time(data["pinned_at"])
+        self._pinned_at: DiscordTime = DiscordTime.parse_time(data["pinned_at"])
         self._message: Message = state.create_message(channel=channel, data=data["message"])
 
     @property
@@ -836,7 +836,7 @@ class MessagePin:
         return self._message
 
     @property
-    def pinned_at(self) -> datetime.datetime:
+    def pinned_at(self) -> DiscordTime:
         """An aware timestamp of when the message was pinned."""
         return self._pinned_at
 
@@ -1054,7 +1054,7 @@ class Message(Hashable):
         self.application = data.get("application")
         self.activity = data.get("activity")
         self.channel = channel
-        self._edited_timestamp = parse_time(data["edited_timestamp"])
+        self._edited_timestamp = DiscordTime.parse_time(data["edited_timestamp"])
         self.type = try_enum(MessageType, data["type"])
         self.pinned = data["pinned"]
         self.flags = MessageFlags._from_value(data.get("flags", 0))
@@ -1332,12 +1332,12 @@ class Message(Hashable):
         return escape_mentions(result)
 
     @property
-    def created_at(self) -> datetime.datetime:
+    def created_at(self) -> DiscordTime:
         """The message's creation time in UTC."""
-        return utils.snowflake_time(self.id)
+        return DiscordTime.from_snowflake(self.id)
 
     @property
-    def edited_at(self) -> datetime.datetime | None:
+    def edited_at(self) -> DiscordTime | None:
         """An aware UTC datetime object containing the
         edited time of the message.
         """
@@ -2181,9 +2181,9 @@ class PartialMessage(Hashable):
         return f"<PartialMessage id={self.id} channel={self.channel!r}>"
 
     @property
-    def created_at(self) -> datetime.datetime:
+    def created_at(self) -> DiscordTime:
         """The partial message's creation time in UTC."""
-        return utils.snowflake_time(self.id)
+        return DiscordTime.from_snowflake(self.id)
 
     @property
     def poll(self) -> Poll | None:

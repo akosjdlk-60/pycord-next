@@ -28,9 +28,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Iterator
 
 from .asset import Asset, AssetMixin
+from .datetime import DiscordTime
 from .partial_emoji import PartialEmoji, _EmojiTag
 from .user import User
-from .utils import MISSING, Undefined, snowflake_time
+from .utils import MISSING, Undefined
 from .utils.private import SnowflakeList
 
 __all__ = (
@@ -40,8 +41,6 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
-    from datetime import datetime
-
     from .abc import Snowflake
     from .app.state import ConnectionState
     from .guild import Guild
@@ -100,9 +99,9 @@ class BaseEmoji(_EmojiTag, AssetMixin):
         return self.id >> 22
 
     @property
-    def created_at(self) -> datetime:
+    def created_at(self) -> DiscordTime:
         """Returns the emoji's creation time in UTC."""
-        return snowflake_time(self.id)
+        return DiscordTime.from_snowflake(self.id)
 
     @property
     def url(self) -> str:

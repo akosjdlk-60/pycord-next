@@ -30,10 +30,11 @@ from functools import cached_property
 from inspect import isawaitable
 from typing import TYPE_CHECKING, Any, Callable, ClassVar, Generator, TypeVar
 
-from . import enums, utils
+from . import enums
 from .asset import Asset
 from .automod import AutoModAction, AutoModTriggerMetadata
 from .colour import Colour
+from .datetime import DiscordTime
 from .invite import Invite
 from .mixins import Hashable
 from .object import Object
@@ -585,9 +586,9 @@ class AuditLogEntry(Hashable):
         return f"<AuditLogEntry id={self.id} action={self.action} user={self.user!r}>"
 
     @cached_property
-    def created_at(self) -> datetime.datetime:
+    def created_at(self) -> DiscordTime:
         """Returns the entry's creation time in UTC."""
-        return utils.snowflake_time(self.id)
+        return DiscordTime.from_snowflake(self.id)
 
     async def get_target(
         self,

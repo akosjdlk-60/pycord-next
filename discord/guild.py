@@ -27,7 +27,6 @@ from __future__ import annotations
 
 import asyncio
 import copy
-import datetime
 import unicodedata
 from typing import (
     TYPE_CHECKING,
@@ -53,6 +52,7 @@ from .channel import *
 from .channel import _guild_channel_factory, _threaded_guild_channel_factory
 from .channel.thread import Thread, ThreadMember
 from .colour import Colour
+from .datetime import DiscordTime
 from .emoji import GuildEmoji, PartialEmoji, _EmojiTag
 from .enums import (
     AuditLogAction,
@@ -1259,9 +1259,9 @@ class Guild(Hashable):
         return (self.id >> 22) % count
 
     @property
-    def created_at(self) -> datetime.datetime:
+    def created_at(self) -> DiscordTime:
         """Returns the guild's creation time in UTC."""
-        return utils.snowflake_time(self.id)
+        return DiscordTime.from_snowflake(self.id)
 
     @property
     def invites_disabled(self) -> bool:

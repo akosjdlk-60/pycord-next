@@ -28,9 +28,8 @@ from __future__ import annotations
 import datetime
 from typing import TYPE_CHECKING, Any, Mapping, TypeVar
 
-from . import utils
 from .colour import Colour
-from .utils.private import parse_time
+from .datetime import DiscordTime
 
 __all__ = (
     "Embed",
@@ -324,7 +323,7 @@ class Embed:
     url: :class:`str`
         The URL of the embed.
         This can be set during initialisation.
-    timestamp: :class:`datetime.datetime`
+    timestamp: :class:`discord.DiscordTime`
         The timestamp of the embed content. This is an aware datetime.
         If a naive datetime is passed, it is converted to an aware
         datetime with the local timezone.
@@ -380,8 +379,7 @@ class Embed:
         if self.url:
             self.url = str(self.url)
 
-        if timestamp:
-            self.timestamp = timestamp
+        self.timestamp: DiscordTime | None = DiscordTime.from_datetime(timestamp) if timestamp else None
 
         self._fields: list[EmbedField] = fields if fields is not None else []
 
@@ -437,10 +435,10 @@ class Embed:
         except KeyError:
             pass
 
-        try:
-            self._timestamp = parse_time(data["timestamp"])
-        except KeyError:
-            pass
+        if timestamp := data.get("timestamp"):
+            self._timestamp: DiscordTime | None = DiscordTime.parse_time(timestamp)
+        else:
+            self._timestamp = None
 
         for attr in (
             "thumbnail",
@@ -533,15 +531,15 @@ class Embed:
     color = colour
 
     @property
-    def timestamp(self) -> datetime.datetime | None:
-        return getattr(self, "_timestamp", None)
+    def timestamp(self) -> DiscordTime | None:
+        return self._timestamp
 
     @timestamp.setter
     def timestamp(self, value: datetime.datetime | None):
         if isinstance(value, datetime.datetime):
             if value.tzinfo is None:
                 value = value.astimezone()
-            self._timestamp = value
+            self._timestamp = DiscordTime.from_datetime(value)
         elif value is None:
             self._timestamp = value
         else:

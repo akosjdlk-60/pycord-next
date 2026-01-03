@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import datetime
 import importlib.resources
 import itertools
 import json
@@ -32,23 +31,6 @@ class Undefined(Enum):
 MISSING: Literal[Undefined.MISSING] = Undefined.MISSING
 
 DISCORD_EPOCH = 1420070400000
-
-
-def utcnow() -> datetime.datetime:
-    """A helper function to return an aware UTC datetime representing the current time.
-
-    This should be preferred to :meth:`datetime.datetime.utcnow` since it is an aware
-    datetime, compared to the naive datetime in the standard library.
-
-    .. versionadded:: 2.0
-
-    Returns
-    -------
-    :class:`datetime.datetime`
-        The current aware datetime in UTC.
-    """
-    return datetime.datetime.now(datetime.timezone.utc)
-
 
 V = Iterable["OptionChoice"] | Iterable[str] | Iterable[int] | Iterable[float]
 AV = Awaitable[V]
@@ -150,77 +132,6 @@ def basic_autocomplete(values: Values, *, filter: FilterFunc | None = None) -> A
     return autocomplete_callback
 
 
-def generate_snowflake(
-    dt: datetime.datetime | None = None,
-    *,
-    mode: Literal["boundary", "realistic"] = "boundary",
-    high: bool = False,
-) -> int:
-    """Returns a numeric snowflake pretending to be created at the given date.
-
-    This function can generate both realistic snowflakes (for general use) and
-    boundary snowflakes (for range queries).
-
-    Parameters
-    ----------
-    dt: :class:`datetime.datetime`
-        A datetime object to convert to a snowflake.
-        If naive, the timezone is assumed to be local time.
-        If None, uses current UTC time.
-    mode: :class:`str`
-        The type of snowflake to generate:
-        - "realistic": Creates a snowflake with random-like lower bits
-        - "boundary": Creates a snowflake for range queries (default)
-    high: :class:`bool`
-        Only used when mode="boundary". Whether to set the lower 22 bits
-        to high (True) or low (False). Default is False.
-
-    Returns
-    -------
-    :class:`int`
-        The snowflake representing the time given.
-
-    Examples
-    --------
-    # Generate realistic snowflake
-    snowflake = generate_snowflake(dt)
-
-    # Generate boundary snowflakes
-    lower_bound = generate_snowflake(dt, mode="boundary", high=False)
-    upper_bound = generate_snowflake(dt, mode="boundary", high=True)
-
-    # For inclusive ranges:
-    # Lower: generate_snowflake(dt, mode="boundary", high=False) - 1
-    # Upper: generate_snowflake(dt, mode="boundary", high=True) + 1
-    """
-    dt = dt or utcnow()
-    discord_millis = int(dt.timestamp() * 1000 - DISCORD_EPOCH)
-
-    if mode == "realistic":
-        return (discord_millis << 22) | 0x3FFFFF
-    elif mode == "boundary":
-        return (discord_millis << 22) + (2**22 - 1 if high else 0)
-    else:
-        raise ValueError(f"Invalid mode '{mode}'. Must be 'realistic' or 'boundary'")
-
-
-def snowflake_time(id: int) -> datetime.datetime:
-    """Converts a Discord snowflake ID to a UTC-aware datetime object.
-
-    Parameters
-    ----------
-    id: :class:`int`
-        The snowflake ID.
-
-    Returns
-    -------
-    :class:`datetime.datetime`
-        An aware datetime in UTC representing the creation time of the snowflake.
-    """
-    timestamp = ((id >> 22) + DISCORD_EPOCH) / 1000
-    return datetime.datetime.fromtimestamp(timestamp, tz=datetime.timezone.utc)
-
-
 def oauth_url(
     client_id: int | str,
     *,
@@ -271,56 +182,6 @@ def oauth_url(
     if disable_guild_select:
         url += "&disable_guild_select=true"
     return url
-
-
-TimestampStyle = Literal["f", "F", "d", "D", "t", "T", "R"]
-
-
-def format_dt(dt: datetime.datetime | datetime.time, /, style: TimestampStyle | None = None) -> str:
-    """A helper function to format a :class:`datetime.datetime` for presentation within Discord.
-
-    This allows for a locale-independent way of presenting data using Discord specific Markdown.
-
-    +-------------+----------------------------+-----------------+
-    |    Style    |       Example Output       |   Description   |
-    +=============+============================+=================+
-    | t           | 22:57                      | Short Time      |
-    +-------------+----------------------------+-----------------+
-    | T           | 22:57:58                   | Long Time       |
-    +-------------+----------------------------+-----------------+
-    | d           | 17/05/2016                 | Short Date      |
-    +-------------+----------------------------+-----------------+
-    | D           | 17 May 2016                | Long Date       |
-    +-------------+----------------------------+-----------------+
-    | f (default) | 17 May 2016 22:57          | Short Date Time |
-    +-------------+----------------------------+-----------------+
-    | F           | Tuesday, 17 May 2016 22:57 | Long Date Time  |
-    +-------------+----------------------------+-----------------+
-    | R           | 5 years ago                | Relative Time   |
-    +-------------+----------------------------+-----------------+
-
-    Note that the exact output depends on the user's locale setting in the client. The example output
-    presented is using the ``en-GB`` locale.
-
-    .. versionadded:: 2.0
-
-    Parameters
-    ----------
-    dt: Union[:class:`datetime.datetime`, :class:`datetime.time`]
-        The datetime to format.
-    style: :class:`str`R
-        The style to format the datetime with.
-
-    Returns
-    -------
-    :class:`str`
-        The formatted string.
-    """
-    if isinstance(dt, datetime.time):
-        dt = datetime.datetime.combine(datetime.datetime.now(), dt)
-    if style is None:
-        return f"<t:{int(dt.timestamp())}>"
-    return f"<t:{int(dt.timestamp())}:{style}>"
 
 
 MENTION_PATTERN = re.compile(r"@(everyone|here|[!&]?[0-9]{17,20})")
