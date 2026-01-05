@@ -49,6 +49,7 @@ from discord.interactions import AutocompleteInteraction, Interaction
 
 from ..channel import PartialMessageable, _threaded_guild_channel_factory
 from ..channel.thread import Thread
+from ..datetime import DiscordTime
 from ..enums import Enum as DiscordEnum
 from ..enums import (
     IntegrationType,
@@ -70,7 +71,7 @@ from ..message import Attachment, Message
 from ..object import Object
 from ..role import Role
 from ..user import User
-from ..utils import MISSING, find, utcnow
+from ..utils import MISSING, find
 from ..utils.private import async_all, maybe_awaitable, warn_deprecated
 from .context import ApplicationContext, AutocompleteContext
 from .options import Option, OptionChoice
@@ -376,7 +377,7 @@ class ApplicationCommand(_BaseCommand, Generic[CogT, P, T]):
             return False
 
         bucket = self._buckets.get_bucket(ctx)  # type: ignore
-        current = utcnow().timestamp()
+        current = DiscordTime.utcnow().timestamp()
         return bucket.get_tokens(current) == 0
 
     def reset_cooldown(self, ctx: ApplicationContext) -> None:
@@ -411,7 +412,7 @@ class ApplicationCommand(_BaseCommand, Generic[CogT, P, T]):
         """
         if self._buckets.valid:
             bucket = self._buckets.get_bucket(ctx)  # type: ignore
-            current = utcnow().timestamp()
+            current = DiscordTime.utcnow().timestamp()
             return bucket.get_retry_after(current)
 
         return 0.0

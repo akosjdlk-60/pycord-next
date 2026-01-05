@@ -247,3 +247,9 @@ Application Role Connections
 
 .. autoclass:: ApplicationRoleConnectionMetadata
     :members:
+
+Datetime
+--------
+
+.. autoclass:: discord.DiscordTime
+    :members:

@@ -32,6 +32,7 @@ from typing_extensions import override
 from discord import utils
 
 from ..abc import Messageable, _purge_messages_helper
+from ..datetime import DiscordTime
 from ..enums import (
     ChannelType,
     try_enum,
@@ -42,7 +43,7 @@ from ..flags import ChannelFlags
 from ..mixins import Hashable
 from ..types.threads import Thread as ThreadPayload
 from ..utils import MISSING
-from ..utils.private import get_as_snowflake, parse_time
+from ..utils.private import get_as_snowflake
 from .base import BaseChannel, GuildMessageableChannel
 
 __all__ = (
@@ -128,9 +129,9 @@ class Thread(BaseChannel[ThreadPayload], GuildMessageableChannel):
     auto_archive_duration: int
         The duration in minutes until the thread is automatically archived due to inactivity.
         Usually a value of 60, 1440, 4320 and 10080.
-    archive_timestamp: datetime.datetime
+    archive_timestamp: discord.DiscordTime
         An aware timestamp of when the thread's archived status was last updated in UTC.
-    created_at: datetime.datetime | None
+    created_at: discord.DiscordTime | None
         An aware timestamp of when the thread was created.
         Only available for threads created after 2022-01-09.
     flags: ChannelFlags
@@ -205,10 +206,10 @@ class Thread(BaseChannel[ThreadPayload], GuildMessageableChannel):
             metadata = data["thread_metadata"]
             self.archived: bool = metadata["archived"]
             self.auto_archive_duration: int = metadata["auto_archive_duration"]
-            self.archive_timestamp = parse_time(metadata["archive_timestamp"])
+            self.archive_timestamp: DiscordTime = DiscordTime.parse_time(metadata["archive_timestamp"])
             self.locked: bool = metadata["locked"]
             self.invitable: bool = metadata.get("invitable", True)
-            self.created_at = parse_time(metadata.get("create_timestamp"))
+            self.created_at: DiscordTime | None = DiscordTime.parse_time(metadata.get("create_timestamp"))
 
         # Handle thread member data
         if "member" in data:
@@ -856,7 +857,7 @@ class ThreadMember(Hashable):
         The thread member's ID.
     thread_id: :class:`int`
         The thread's ID.
-    joined_at: :class:`datetime.datetime`
+    joined_at: :class:`discord.DiscordTime`
         The time the member joined the thread in UTC.
     """
 
@@ -889,7 +890,7 @@ class ThreadMember(Hashable):
         except KeyError:
             self.thread_id = self.parent.id
 
-        self.joined_at = parse_time(data["join_timestamp"])
+        self.joined_at: DiscordTime | None = DiscordTime.parse_time(data["join_timestamp"])
         self.flags = data["flags"]
 
     @property

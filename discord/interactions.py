@@ -26,13 +26,13 @@ DEALINGS IN THE SOFTWARE.
 from __future__ import annotations
 
 import asyncio
-import datetime
 from typing import TYPE_CHECKING, Any, Coroutine, Generic, Union
 
 from typing_extensions import Self, TypeVar, override, reveal_type
 
 from . import utils
 from .channel import ChannelType, PartialMessageable, _threaded_channel_factory
+from .datetime import DiscordTime
 from .enums import (
     InteractionContextType,
     InteractionResponseType,
@@ -335,9 +335,9 @@ class Interaction(Generic[T]):
         return self._state and await self._state._get_guild(self.guild_id)
 
     @property
-    def created_at(self) -> datetime.datetime:
+    def created_at(self) -> DiscordTime:
         """Returns the interaction's creation time in UTC."""
-        return utils.snowflake_time(self.id)
+        return DiscordTime.from_snowflake(self.id)
 
     def is_command(self) -> bool:
         """Indicates whether the interaction is an application command."""
